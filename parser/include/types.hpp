@@ -3,9 +3,8 @@
 #include <string>
 #include <cstdio>
 #include <map>
+#include <memory>
 
-namespace parser
-{
 
 struct Section {
     std::string name;
@@ -32,5 +31,3 @@ struct Relocation {
     std::string type, symbol_name;
     std::map<std::string, std::string> extra;
 };
-
-} // namespace parser

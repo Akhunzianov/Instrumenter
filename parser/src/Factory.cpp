@@ -2,12 +2,10 @@
 #include <stdexcept>
 #include <cstring>
 
-#include "parser/Parser.hpp"
-#include "parser/elf/ElfParser.hpp"
+#include "Parser.hpp"
+#include "ElfParser.hpp"
 
-using namespace parser;
-
-std::unique_ptr<Parser> parser::createParser(const std::string& path) {
+std::unique_ptr<Parser> createParser(const std::string& path) {
     std::ifstream file(path, std::ios::binary);
     if (!file) 
         throw std::runtime_error("Cannot open file: " + path);
