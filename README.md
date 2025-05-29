@@ -187,7 +187,7 @@ extern "C" void before_run_ptrace(pid_t pid);
 extern "C" void on_breakpoint_ptrace(pid_t pid, breakpoint_t& bp);
 extern "C" void clean_up_ptrace(pid_t pid);
 ```
-But feel free to add your own
+But feel free to add your own and develop usefull instrumenting scenarios.
 
 ### ✅ Default Override File: user.cpp
 
