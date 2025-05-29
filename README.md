@@ -1,5 +1,3 @@
-Вот английская версия твоего README в формате Markdown:
-
 # 🔧 Instrumenter
 
 **Instrumenter** is a utility for static and dynamic analysis of binary files, with support for inserting and tracking breakpoints in executable code.  
