@@ -12,7 +12,6 @@ Please read the guidelines below to get started.
 - Code should follow the existing formatting style (indentation, naming, etc.).
 - Add comments and documentation for new public methods or architecture-specific logic.
 - Test your changes with a representative binary (preferably one using basic libc symbols).
-- Add a note to `CHANGELOG.md` if your change affects end users.
 
 ---
 
