@@ -38,6 +38,7 @@ target_include_directories(instrumenter_lib
 
 add_executable(instrumenter_exec
   src/main.cpp
+  ${CMAKE_SOURCE_DIR}/user.cpp
 )
 
 target_link_libraries(instrumenter_exec

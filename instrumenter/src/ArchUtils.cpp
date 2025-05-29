@@ -52,7 +52,7 @@ user_regs_struct get_registers(pid_t &pid) {
 
 void enable_breakpoint(pid_t &pid, breakpoint_t &bp) {
     auto data = ptrace(PTRACE_PEEKDATA, pid, bp.bp_addr, nullptr);
-
+    
 #ifdef __x86_64__
     bp.orig_data = static_cast<uint8_t>(data & 0xff); 
     uint64_t int3 = 0xcc;

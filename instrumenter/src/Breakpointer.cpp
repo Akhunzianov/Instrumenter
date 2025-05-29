@@ -57,31 +57,8 @@ void Breakpointer::set_call_breakpoint(std::intptr_t &call_address, std::intptr_
     }  
 }
 
-void print_wait_status(int status) {
-    std::cout << "Raw waitpid status: " << status 
-              << " (0x" << std::hex << status << std::dec << ")\n";
-
-    if (WIFEXITED(status)) {
-        std::cout << "→ Process exited normally with code: " 
-                  << WEXITSTATUS(status) << "\n";
-    } else if (WIFSIGNALED(status)) {
-        std::cout << "→ Process killed by signal: " 
-                  << WTERMSIG(status);
-        if (WCOREDUMP(status)) std::cout << " (core dumped)";
-        std::cout << "\n";
-    } else if (WIFSTOPPED(status)) {
-        std::cout << "→ Process stopped by signal: " 
-                  << WSTOPSIG(status) << "\n";
-    } else if (WIFCONTINUED(status)) {
-        std::cout << "→ Process was resumed by SIGCONT\n";
-    } else {
-        std::cout << "→ Unknown status\n";
-    }
-
-    int event = (status >> 16) & 0xffff;
-    if (event != 0) {
-        std::cout << "→ PTRACE event code: " << event << "\n";
-    }
+extern "C" void __attribute__((weak)) clean_up_ptrace(pid_t pid) {
+    return;
 }
 
 pid_t Breakpointer::wait_signal() {
@@ -90,15 +67,21 @@ pid_t Breakpointer::wait_signal() {
     prog_pid = waitpid(prog_pid, &status, opts);
     if (WIFEXITED(status) || (WIFSIGNALED(status) && WTERMSIG(status) == SIGKILL)) {
       std::cout << "[+] process " << prog_pid << " terminated" << std::endl;
+      clean_up_ptrace(prog_pid);
       return 0;
     }
     return prog_pid;
+}
+
+extern "C" void __attribute__((weak)) on_breakpoint_ptrace(pid_t pid, breakpoint_t& bp) {
+    return;
 }
 
 void Breakpointer::step_over_breakpoint(std::unordered_map<std::intptr_t, int>& func_ht, std::vector<Symbol>& functions) {
     auto bp_prog_counter = get_program_counter(prog_pid) - 1;
     if (breakpoints_ht.count(bp_prog_counter)) {
         auto& bp = breakpoints_ht[bp_prog_counter];
+        on_breakpoint_ptrace(prog_pid, bp);
         if (bp.enabled) {
             printf("breakpoint at [0x%" PRIx64 "] ", bp.bp_addr);
             if (bp.is_call_return_addr) {
@@ -120,7 +103,8 @@ void Breakpointer::step_over_breakpoint(std::unordered_map<std::intptr_t, int>& 
             set_program_counter(prog_pid, previous_prog_counter);
             disable_breakpoint(prog_pid, bp);
             ptrace(PTRACE_SINGLESTEP, prog_pid, nullptr, nullptr);
-            wait_signal();
+            if (wait_signal() == 0)
+	        exit(0);
             enable_breakpoint(prog_pid, bp);
         }
   } 

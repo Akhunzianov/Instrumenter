@@ -34,6 +34,7 @@ void Instrument::start_instrument(int argc, char* argv[]) {
         run_handler();
 }
 
+
 void Instrument::run_program(char* cmd[]) {
     if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0) {
         perror("run_program: ptrace error\n");
@@ -43,12 +44,22 @@ void Instrument::run_program(char* cmd[]) {
     execvp(cmd[0], cmd);
 }
 
-void Instrument::run_handler() {
-    prog_pid = real_breakpointer->wait_signal();
-
+extern "C" void __attribute__((weak)) set_ptrace_flags(pid_t pid) {
     long ptrace_opts;
     ptrace_opts = PTRACE_O_TRACECLONE|PTRACE_O_TRACEFORK|PTRACE_O_TRACEEXEC|PTRACE_O_TRACEEXIT;
-    ptrace(PTRACE_SETOPTIONS, prog_pid, 0, ptrace_opts);
+    ptrace(PTRACE_SETOPTIONS, pid, 0, ptrace_opts);
+}
+
+extern "C" void __attribute__((weak)) before_run_ptrace(pid_t pid) {
+    return;
+}
+
+void Instrument::run_handler() {
+    prog_pid = real_breakpointer->wait_signal();
+    if (prog_pid == 0)
+	return;
+    set_ptrace_flags(prog_pid);
+    before_run_ptrace(prog_pid);
     init_breakpoints();
 }
 
@@ -81,13 +92,13 @@ void Instrument::init_breakpoints() {
         auto& segs = real_parser->get_segments();
         for(auto &seg: segs) {
             if(seg.type == "LOAD" && seg.flags == "RE") {
-                text_code = &(real_parser->prog_mmap)[text_code_entry - seg.vma];
+                text_code = &(real_parser->prog_mmap)[text_code_entry - seg.vma + seg.offset];
                 text_code_size = seg.memsize;
                 break;
             }
         }
         Disassembler diser = Disassembler(real_parser->archType, real_breakpointer->get_calls_ht());
-        diser.call_disasm(text_code, text_code_size, text_code_entry, false);
+        diser.call_disasm(text_code, text_code_size, text_code_entry + vaddr_offset, false);
 
         for (auto &call_map: real_breakpointer->get_calls_ht()) {
             auto &call = call_map.second;
@@ -95,9 +106,9 @@ void Instrument::init_breakpoints() {
                 continue;
             if (rels_ht.count(call.call_target_addr))
                 continue;
-            else
+	    else
                 call.call_name = "f_" + std::to_string(call.call_target_addr);
-            auto nullintptr = (std::intptr_t)0;
+	    auto nullintptr = (std::intptr_t)0;
             real_breakpointer->set_call_breakpoint(call.call_addr, nullintptr);
         }
     }
@@ -108,8 +119,9 @@ void Instrument::init_breakpoints() {
 void Instrument::continue_exec() {
     while (true) { 
         ptrace(PTRACE_CONT, prog_pid, nullptr, nullptr);
-        real_breakpointer->wait_signal();
-        real_breakpointer->step_over_breakpoint(funcs_ht, real_parser->get_functions());
+        if (real_breakpointer->wait_signal() == 0)
+	    return;
+	real_breakpointer->step_over_breakpoint(funcs_ht, real_parser->get_functions());
     }
 }
 

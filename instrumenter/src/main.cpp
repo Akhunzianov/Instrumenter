@@ -17,8 +17,6 @@ int main(int argc, char* argv[]) {
 
     Instrument instrument(std::move(parser), std::move(breakpointer));
 
-    std::cout << "\nHi \n" << std::endl;
-
     instrument.start_instrument(argc, argv);
 
     return 0;

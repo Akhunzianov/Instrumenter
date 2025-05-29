@@ -1,0 +1,4 @@
+build/
+parser_exec
+instrumenter_exec
+/*.elf
