@@ -9,7 +9,7 @@ Currently supports ELF files and the `x86_64` architecture.
 
 ## 📦 Features
 
-* Disassembles the `.text` section using Capstone
+* Parses executable files
 * Detects function calls (`call`) and sets breakpoints
 * Supports PIE (Position-Independent Executables)
 * Interactive execution mode with function/return tracing
