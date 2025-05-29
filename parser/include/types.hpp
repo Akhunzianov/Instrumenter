@@ -29,5 +29,6 @@ struct Symbol {
 struct Relocation {
     std::intptr_t offset, info;
     std::string type, symbol_name;
+    uint64_t addr;
     std::map<std::string, std::string> extra;
 };

@@ -1,6 +1,8 @@
 add_library(instrumenter_lib STATIC
   src/Instrument.cpp
   src/ArchUtils.cpp 
+  src/Breakpointer.cpp
+  src/Disassembler.cpp
   src/main.cpp
 )
 

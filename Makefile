@@ -6,12 +6,5 @@ all:
 
 clean:
 	rm -rf build
-
-parser: all
-	@./build/parser/parser_exec $(IN) $(OUT)
-
-instrumenter: all
-	@./build/instrumenter/instrumenter_exec $(IN) $(OUT)
-
-reader: all
-	@./build/reader/reader_exec $(IN) $(OUT)
+	rm -rf parser_exec
+	rm -rf instrumenter_exec

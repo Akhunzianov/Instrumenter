@@ -1,83 +1,34 @@
 #include "ElfParser.hpp"
 
-// DEBUG out
-// #include <iomanip>
-// void print_bytes(const void* ptr, size_t count, const std::string& label) {
-//     const unsigned char* bytes = reinterpret_cast<const unsigned char*>(ptr);
-//     std::cout << label << ": ";
-//     for (size_t i = 0; i < count; ++i) {
-//         std::cout << std::hex << std::setw(2) << std::setfill('0')
-//                   << static_cast<int>(bytes[i]) << " ";
-//     }
-//     std::cout << std::dec << std::endl;
-// }
-
-std::vector<Section> ElfParser::get_sections() const {
+std::vector<Section>& ElfParser::get_sections() const {
+    if (sections_cache.size())
+        return sections_cache;
     Elf64_Ehdr *ehdr = (Elf64_Ehdr*)prog_mmap;
     Elf64_Shdr *shdr = (Elf64_Shdr*)(prog_mmap + ehdr->e_shoff);
     int shnum = ehdr->e_shnum;
     Elf64_Shdr *sh_strtab = &shdr[ehdr->e_shstrndx];
     const char *const sh_strtab_p = (char*)prog_mmap + sh_strtab->sh_offset;
 
-    // DEBUG out
-    // print_bytes(ehdr, 16, "EHDR (first 16 bytes)");
-    // print_bytes(prog_mmap + 0x4330, 16, "SHDR[0] (first 16 bytes)");
-    // std::cout << ehdr->e_shoff << std::endl;
-
     std::vector<Section> sections;
     for (int i = 0; i < shnum; i++) {
-        // DEBUG out
-        // std::cout << i << std::endl;
-
         Section section;
         section.addr = shdr[i].sh_addr;
-
-        // DEBUG out
-        // std::cout << section.addr << std::endl;
-
         section.offset = shdr[i].sh_offset;
-
-        // DEBUG out
-        // std::cout << section.offset << std::endl;
-
         section.size = shdr[i].sh_size;
-
-        // DEBUG out
-        // std::cout << section.size << std::endl;
-
         section.name = std::string(sh_strtab_p + shdr[i].sh_name);
-
-        // DEBUG out
-        // std::cout << section.name << std::endl;
-
         section.extra["index"] = std::to_string(i);
-
-        // DEBUG out
-        // std::cout << section.extra["index"] << std::endl;
-
         section.extra["entry_size"] = std::to_string(shdr[i].sh_entsize);
-
-        // DEBUG out
-        // std::cout << section.extra["entry_size"] << std::endl;
-
         section.extra["align"] = std::to_string(shdr[i].sh_addralign);
-
-        // DEBUG out
-        // std::cout << section.extra["align"] << std::endl;
-
         section.extra["type"] = get_section_type(shdr[i].sh_type);
-
-        // DEBUG out
-        // std::cout << section.extra["type"] << std::endl;
-        
         sections.push_back(std::move(section));
-
     }
-
-    return sections;
+    sections_cache = sections;
+    return sections_cache;
 }
 
-std::vector<Segment> ElfParser::get_segments() const {
+std::vector<Segment>& ElfParser::get_segments() const {
+    if (segments_cache.size())
+        return segments_cache;
     Elf64_Ehdr *ehdr = (Elf64_Ehdr*)prog_mmap;
     Elf64_Phdr *phdr = (Elf64_Phdr*)(prog_mmap + ehdr->e_phoff);
     int phnum = ehdr->e_phnum;
@@ -98,11 +49,14 @@ std::vector<Segment> ElfParser::get_segments() const {
         segment.extra["align"] = std::to_string(phdr[i].p_align);
         segments.push_back(segment);
     }
-    return segments;
+    segments_cache = segments;
+    return segments_cache;
 }
 
-std::vector<Symbol> ElfParser::get_symbols() const {
-    std::vector<Section> sections = get_sections();
+std::vector<Symbol>& ElfParser::get_symbols() const {
+    if (symbols_cache.size())
+        return symbols_cache;
+    std::vector<Section>& sections = get_sections();
     Elf64_Ehdr *ehdr = (Elf64_Ehdr*)prog_mmap;
     Elf64_Shdr *shdr = (Elf64_Shdr*)(prog_mmap + ehdr->e_shoff);
     char *sh_strtab_p = nullptr;
@@ -144,14 +98,17 @@ std::vector<Symbol> ElfParser::get_symbols() const {
             symbols.push_back(symbol);
         }
     }
-    return symbols;
+    symbols_cache = symbols;
+    return symbols_cache;
 }
 
-std::vector<Relocation> ElfParser::get_relocations() const {
+std::vector<Relocation>& ElfParser::get_relocations() const {
+    if (realocations_cache.size())
+        return realocations_cache;
     auto sections = get_sections();
     auto syms = get_symbols();
     int32_t entry_size = 0;
-    int64_t vma_addr = 0;
+    uint64_t vma_addr = 0;
     for (auto &section : sections) {
         if(section.name == ".plt") {
           entry_size = std::stoi(section.extra["entry_size"]);
@@ -171,26 +128,32 @@ std::vector<Relocation> ElfParser::get_relocations() const {
             relocation.info = static_cast<std::intptr_t>(relocations_data[i].r_info);
             relocation.type = get_relocation_type(relocations_data[i].r_info);
             relocation.symbol_name = get_relocation_symbol_name(relocations_data[i].r_info, syms);
-            relocation.extra["addr"] = std::to_string(vma_addr + (i + 1) * entry_size);
+            relocation.addr = vma_addr + (i + 1) * entry_size;
+            realocs_addrs_cache.push_back(vma_addr + (i + 1) * entry_size);
             relocation.extra["section_name"] = section.name;
             relocation.extra["symbol_val"] = std::to_string(get_relocation_symbol_value(relocations_data[i].r_info, syms));
             
             relocations.push_back(relocation);
         }
     }
-    return relocations;
+    realocations_cache = relocations;
+    return realocations_cache;
 }
 
-std::vector<Symbol> ElfParser::get_functions() const {
+std::vector<Symbol>& ElfParser::get_functions() const {
+    if (functions_cache.size())
+        return functions_cache;
     std::vector<Symbol> symbols = get_symbols();
     std::vector<Symbol> functions;
     for (auto &s : symbols) {
-        if ((s.value != 0) && (s.type == "FUNC") && (!s.name.empty()) && (s.size >= 5)) // TODO: count realocs > 0 case, think what to do with short functions
+        if ((s.value != 0) && (s.type == "FUNC") && (!s.name.empty()) && !std::count(realocs_addrs_cache.begin(), realocs_addrs_cache.end(), s.value))
             functions.push_back(s);
     }
-
-    return functions;
+    functions_cache = functions;
+    return functions_cache;
 }
+
+
 
 uint64_t ElfParser::get_function_vaddr(Symbol func) const {
     uint64_t func_vaddr = func.value;
@@ -223,6 +186,16 @@ uint64_t ElfParser::get_vacant_vaddr() const {
     }
     uint64_t code_base = (max_end + page_sz - 1) & ~(page_sz - 1);
     return code_base;
+}
+
+uint64_t ElfParser::get_code_start_vaddr() const {
+    uint64_t min_start = INT64_MAX;
+    for (auto &seg : get_segments()) {
+        uint64_t vstart = seg.vma;
+        if (vstart < min_start && seg.flags == "RE")
+	    min_start = vstart;
+    }
+    return min_start;
 }
 
 std::string ElfParser::get_section_type(int type) const {
@@ -363,131 +336,9 @@ std::string ElfParser::get_relocation_symbol_name(uint64_t &ind, std::vector<Sym
     return sym_name;
 }
 
-void ElfParser::add_section(const std::string &name, const uint8_t *data, size_t len, uint64_t vaddr, uint8_t flags) {
-    Elf64_Ehdr *old_ehdr = (Elf64_Ehdr*)prog_mmap;
-    Elf64_Phdr *old_phdr = (Elf64_Phdr*)(prog_mmap + old_ehdr->e_phoff);
-    Elf64_Shdr *old_shdr = (Elf64_Shdr*)(prog_mmap + old_ehdr->e_shoff);
-
-    int32_t old_shnum = old_ehdr->e_shnum;
-    int32_t old_phnum = old_ehdr->e_phnum;
-
-    size_t align = 0x1000;
-    size_t pad = (align - (prog_size % align)) % align;
-    size_t insert_at = prog_size + pad;
-    size_t new_phnum = old_phnum + 1;
-    size_t new_shnum = old_shnum + 1;
-    size_t phdr_size = new_phnum * sizeof(Elf64_Phdr);
-    size_t shdr_size = new_shnum * sizeof(Elf64_Shdr);
-    size_t new_size  = insert_at + len + phdr_size + shdr_size;
-
-    std::vector<uint8_t> buf(new_size, 0);
-    memcpy(buf.data(), prog_mmap, prog_size);
-    memset(buf.data() + prog_size, 0, pad);
-    memcpy(buf.data() + insert_at, data, len);
-
-    size_t new_phoff = insert_at + len;
-    memcpy(buf.data() + new_phoff, old_phdr, old_phnum * sizeof(Elf64_Phdr));
-
-    Elf64_Phdr new_ph = {};
-    new_ph.p_type   = PT_LOAD;
-    new_ph.p_offset = insert_at;
-    new_ph.p_vaddr  = vaddr;
-    new_ph.p_paddr  = vaddr;
-    new_ph.p_filesz = len;
-    new_ph.p_memsz  = len;
-    new_ph.p_flags  = flags; // PF_R|PF_W|PF_X mask
-    new_ph.p_align  = align;
-    memcpy(buf.data() + new_phoff + old_phnum * sizeof(Elf64_Phdr), &new_ph, sizeof(new_ph));
-
-    size_t new_shoff = new_phoff + phdr_size;
-    memcpy(buf.data() + new_shoff, old_shdr, old_shnum * sizeof(Elf64_Shdr));
-
-    Elf64_Shdr new_sh = {};
-    new_sh.sh_name      = 0;
-    new_sh.sh_type      = SHT_PROGBITS;
-    new_sh.sh_flags     = SHF_ALLOC | ((flags & PF_X) ? SHF_EXECINSTR : 0) | ((flags & PF_W) ? SHF_WRITE : 0);
-    new_sh.sh_addr      = vaddr;
-    new_sh.sh_offset    = insert_at;
-    new_sh.sh_size      = len;
-    new_sh.sh_addralign = align;
-    memcpy(buf.data() + new_shoff + old_shnum * sizeof(Elf64_Shdr), &new_sh, sizeof(new_sh));
-
-    Elf64_Ehdr new_ehdr = *old_ehdr;
-    new_ehdr.e_phoff = new_phoff;
-    new_ehdr.e_shoff = new_shoff;
-    new_ehdr.e_phnum = new_phnum;
-    new_ehdr.e_shnum = new_shnum;
-    memcpy(buf.data(), &new_ehdr, sizeof(new_ehdr));
-
-    int fd_out = open(out_prog_path.c_str(), O_CREAT | O_TRUNC | O_RDWR, 0755);
-    if (fd_out < 0) {
-        perror("add_section: open output");
-        return;
-    }
-    ssize_t written = write(fd_out, buf.data(), new_size);
-    if (written < 0 || static_cast<size_t>(written) != new_size) {
-        perror("add_section: write output");
-        close(fd_out);
-        return;
-    }
-    if (close(fd_out) < 0) {
-        perror("add_section: close output");
-        return;
-    }
-    if (munmap(prog_mmap, prog_size) < 0) {
-        perror("add_section: munmap old");
-    }
-    struct stat st;
-    int fd_new = open(out_prog_path.c_str(), O_RDONLY);
-    if (fd_new < 0) {
-        perror("add_section: open new");
-        return;
-    }
-    if (fstat(fd_new, &st) < 0) {
-        perror("add_section: fstat new");
-        close(fd_new);
-        return;
-    }
-    prog_size = st.st_size;
-    uint8_t *new_map = static_cast<uint8_t*>(mmap(nullptr, prog_size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE, fd_new, 0));
-    if (new_map == MAP_FAILED) {
-        perror("add_section: mmap new");
-        close(fd_new);
-        return;
-    }
-    prog_mmap = new_map;
-
-    // DEBUG out
-    // std::cout << "prgsize "<< prog_size << std::endl;
-
-    if (close(fd_new) < 0) {
-        perror("add_section: close new");
-    }
-}
-
-void ElfParser::sync_map_file() {
-    int fd_out = open(out_prog_path.c_str(), O_CREAT | O_TRUNC | O_RDWR, 0755);
-    if (fd_out < 0) {
-        perror("sync_map_file: open output");
-        return;
-    }
-    ssize_t written = write(fd_out, prog_mmap, prog_size);
-    if (written < 0 || static_cast<size_t>(written) != prog_size) {
-        perror("add_section: write output");
-        close(fd_out);
-        return;
-    }
-    if (close(fd_out) < 0) {
-        perror("sync_map_file: close output");
-        return;
-    }
-}
-
-
-void ElfParser::load(const std::string& path, const std::string& out_path) {
+void ElfParser::load(const std::string& path) {
     fileType = ELF;
     prog_path = path; 
-    out_prog_path = out_path;
     int fd, i;
     struct stat st;
     if ((fd = open(prog_path.c_str(), O_RDONLY)) < 0) {
@@ -510,5 +361,11 @@ void ElfParser::load(const std::string& path, const std::string& out_path) {
         printf("Only 64-bit files supported\n");
         exit(1);
     }
+    get_sections();
+    get_segments();
+    get_symbols();
+    get_relocations();
+    get_functions();
 }
+
 

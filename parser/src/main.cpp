@@ -3,14 +3,14 @@
 #include <iomanip>
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: parser <path-to-in-binary> <path-to-out-binary>\n";
+    if (argc < 2) {
+        std::cerr << "Usage: parser <path-to-in-binary>\n";
         return 1;
     }
 
     try {
         auto parser = createParser(argv[1]);
-        parser->load(argv[1], argv[2]);
+        parser->load(argv[1]);
 
         // Print sections
         std::cout << "Sections:\n";
