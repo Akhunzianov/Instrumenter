@@ -173,7 +173,7 @@ breakpoint at [0x567aadb940a7]   call: f_95084900597744
 ```
 
 ### Note
-feel free to test example.elf and other files yourself
+feel free to test `example.elf` and other files yourself
 
 ---
 
