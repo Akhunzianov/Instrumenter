@@ -10,6 +10,8 @@
 #include <cstring>
 #include <algorithm>
 #include <limits.h>
+#include <stdlib.h>
+#include <cstdio>
 #include <elf.h>
 
 #include "Parser.hpp"

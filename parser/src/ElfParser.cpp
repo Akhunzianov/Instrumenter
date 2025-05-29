@@ -338,7 +338,12 @@ std::string ElfParser::get_relocation_symbol_name(uint64_t &ind, std::vector<Sym
 
 void ElfParser::load(const std::string& path) {
     fileType = ELF;
-    prog_path = path; 
+    char abs_path_buf[PATH_MAX];
+    if (realpath(path.c_str(), abs_path_buf) == nullptr) {
+        perror("realpath");
+        exit(-1);
+    }
+    prog_path = std::string(abs_path_buf);
     int fd, i;
     struct stat st;
     if ((fd = open(prog_path.c_str(), O_RDONLY)) < 0) {
@@ -359,6 +364,14 @@ void ElfParser::load(const std::string& path) {
     Elf64_Ehdr * header = (Elf64_Ehdr*)prog_mmap;
     if (header->e_ident[EI_CLASS] != ELFCLASS64) {
         printf("Only 64-bit files supported\n");
+        exit(1);
+    }
+    switch (header->e_machine) {
+    case EM_X86_64:
+        archType = X86_64;
+        break;
+    default:
+        printf("Unsupported architecture (e_machine = %d)\n", header->e_machine);
         exit(1);
     }
     get_sections();
