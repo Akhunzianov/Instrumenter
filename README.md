@@ -78,6 +78,8 @@ the disassembly will take place and functions will be named automatically as `f_
 ```
 This runs test.elf with arguments and prints register dumps on breakpoint hits.
 
+### More examples
+
 ```bash
 ➜  Instrumenter git:(main) ✗ ./instrumenter_exec --print-regs /root/Instrumenter/dummy.elf
 breakpoint at [0x401020]   call: _start 
@@ -169,6 +171,9 @@ breakpoint at [0x567aadb940a7]   call: f_95084900597744
 [+] process 1897 terminated
 
 ```
+
+### Note
+feel free to test example.elf and other files yourself
 
 ---
 
