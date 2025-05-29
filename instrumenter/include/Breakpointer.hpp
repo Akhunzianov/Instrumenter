@@ -34,6 +34,8 @@ public:
     pid_t wait_signal();
     void step_over_breakpoint(std::unordered_map<std::intptr_t, int>& func_ht, std::vector<Symbol>& functions);
     std::unordered_map<std::intptr_t, call_t>& get_calls_ht();
+    void set_print_regs(bool enable);
+    bool get_print_regs();
 
 private:
     std::unordered_map<std::intptr_t, breakpoint_t> breakpoints_ht;

@@ -29,7 +29,7 @@ void Instrument::start_instrument(int argc, char* argv[]) {
         exit(-1);
     }
     if (prog_pid == 0)
-        run_program(argv + 1);
+	run_program(argv + (real_breakpointer->get_print_regs() ? 2 : 1));
     else    
         run_handler();
 }

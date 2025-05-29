@@ -114,3 +114,11 @@ std::unordered_map<std::intptr_t, call_t>& Breakpointer::get_calls_ht() {
     return calls_ht;
 }
 
+void Breakpointer::set_print_regs(bool enable) {
+    print_regs = enable;
+}
+
+bool Breakpointer::get_print_regs() {
+    return print_regs;
+}
+
