@@ -33,7 +33,7 @@ This file contains architecture-specific logic for:
 
 ### Steps to Add a New Architecture:
 
-1. **Extend the `ArchTypes` enum** (e.g., `ARM64`, `RISCV`) in `Parser.hpp`.
+1. **Extend the `ArchTypes` enum** (e.g., `ARM64`, `RISCV`) in `Parser.hpp`. And add corresponding arch parse handling in `load` function for parsers.
 2. **Add Capstone/Keystone support**:
    - Update `get_capstone_config()` and `get_keystone_config()` in `ArchUtils.hpp`:
      ```cpp
