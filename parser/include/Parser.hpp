@@ -126,7 +126,7 @@ public:
      */
     virtual uint64_t get_code_start_vaddr() const = 0;
 
-private:
+protected:
     /**
      * @brief Cached list of parsed sections.
      *
