@@ -81,7 +81,7 @@ This runs test.elf with arguments and prints register dumps on breakpoint hits.
 ### More examples
 
 ```bash
-➜  Instrumenter git:(main) ✗ ./instrumenter_exec --print-regs /root/Instrumenter/dummy.elf
+➜  Instrumenter git:(main) ✗ ./instrumenter_exec --print-regs ./dummy.elf
 breakpoint at [0x401020]   call: _start 
 
 ========== Register Dump (PID: 1669) ==========
@@ -109,7 +109,7 @@ breakpoint at [0x401020]   call: _start
 
 ```
 ```bash
-➜  Instrumenter git:(main) ✗ ./instrumenter_exec /root/Instrumenter/dummy_nopie.elf 
+➜  Instrumenter git:(main) ✗ ./instrumenter_exec ./dummy_nopie.elf 
 breakpoint at [0x401020]   call: _start 
 breakpoint at [0x401000]   call: _init 
 breakpoint at [0x401100]   call: frame_dummy 
@@ -124,7 +124,7 @@ breakpoint at [0x4011b8]   call: _fini
 ```
 
 ```bash
-➜  Instrumenter git:(main) ✗ ./parser_exec /root/Instrumenter/dummy.elf --no-sections --no-relocs --no-symbols 
+➜  Instrumenter git:(main) ✗ ./parser_exec ./dummy.elf --no-sections --no-relocs --no-symbols 
 
 Segments:
 
@@ -203,7 +203,41 @@ extern "C" void on_breakpoint_ptrace(pid_t pid, breakpoint_t& bp) {
 These functions provide you with a large specter of capabillities as you can utilize `ptrace` functions 
 inside them to get basically any info about running binary. Learn more about [ptrace](https://man7.org/linux/man-pages/man2/ptrace.2.html)
 
+---
 
+## 🔗 Dependencies
+
+This project relies on the following external libraries and tools:
+
+### 🧱 Libraries
+
+| Library        | Purpose                                           |
+|----------------|---------------------------------------------------|
+| **Capstone**   | Disassembly of machine instructions               | 
+| **Keystone**   | Assembly of machine instructions                  |
+| **C++ STL**    | Standard containers, strings, streams, etc.       | 
+
+> ✅ **Capstone** is used to disassembly machine-level instructions in binaries.
+> ✅ **Keystone** is not used right now but is included for possible futere use
+
+---
+
+### 🛠 Install Dependencies
+
+```
+# Capstone
+apt install libcapstone-dev
+
+# Keystone
+git clone https://github.com/keystone-engine/keystone.git /opt/keystone && \
+cd /opt/keystone && \
+mkdir build && cd build && \
+cmake .. && \
+make -j$(nproc) && \
+make install && \
+ldconfig
+```
+- Note that some headers (e.g. `elf.h` may not be present or lack some defenitions on differens systems)
 
 ---
 
