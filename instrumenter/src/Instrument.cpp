@@ -29,7 +29,7 @@ void Instrument::start_instrument(int argc, char* argv[]) {
         exit(-1);
     }
     if (prog_pid == 0)
-	run_program(argv + (real_breakpointer->get_print_regs() ? 2 : 1));
+	    run_program(argv + (real_breakpointer->get_print_regs() ? 2 : 1));
     else    
         run_handler();
 }
@@ -57,7 +57,7 @@ extern "C" void __attribute__((weak)) before_run_ptrace(pid_t pid) {
 void Instrument::run_handler() {
     prog_pid = real_breakpointer->wait_signal();
     if (prog_pid == 0)
-	return;
+	    return;
     set_ptrace_flags(prog_pid);
     before_run_ptrace(prog_pid);
     init_breakpoints();
@@ -77,7 +77,7 @@ void Instrument::init_breakpoints() {
     if (functions.size()) {
         for (int i = 0; i < functions.size(); ++i) {
             auto& func = functions[i];
-	    std::intptr_t func_vaddr = real_parser->get_function_vaddr(func) + vaddr_offset;
+	        std::intptr_t func_vaddr = real_parser->get_function_vaddr(func) + vaddr_offset;
             funcs_ht[func_vaddr] = i;
             real_breakpointer->set_func_breakpoint(func_vaddr);
         }
@@ -91,7 +91,7 @@ void Instrument::init_breakpoints() {
         text_code_entry = ehdr->e_entry;
         auto& segs = real_parser->get_segments();
         for(auto &seg: segs) {
-            if(seg.type == "LOAD" && seg.flags == "RE") {
+            if (seg.type == "LOAD" && seg.flags == "RE") {
                 text_code = &(real_parser->prog_mmap)[text_code_entry - seg.vma + seg.offset];
                 text_code_size = seg.memsize;
                 break;
@@ -106,9 +106,9 @@ void Instrument::init_breakpoints() {
                 continue;
             if (rels_ht.count(call.call_target_addr))
                 continue;
-	    else
+	        else
                 call.call_name = "f_" + std::to_string(call.call_target_addr);
-	    auto nullintptr = (std::intptr_t)0;
+	        auto nullintptr = (std::intptr_t)0;
             real_breakpointer->set_call_breakpoint(call.call_addr, nullintptr);
         }
     }
@@ -120,8 +120,8 @@ void Instrument::continue_exec() {
     while (true) { 
         ptrace(PTRACE_CONT, prog_pid, nullptr, nullptr);
         if (real_breakpointer->wait_signal() == 0)
-	    return;
-	real_breakpointer->step_over_breakpoint(funcs_ht, real_parser->get_functions());
+	        return;
+	    real_breakpointer->step_over_breakpoint(funcs_ht, real_parser->get_functions());
     }
 }
 

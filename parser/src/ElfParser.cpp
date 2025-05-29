@@ -87,9 +87,9 @@ std::vector<Symbol>& ElfParser::get_symbols() const {
             symbol.type = get_symbol_type(syms_data[i].st_info);
             symbol.bind = get_symbol_bind(syms_data[i].st_info);
             symbol.visibility = get_symbol_visibility(syms_data[i].st_other);
-            if(section.extra["type"] == "SHT_SYMTAB")
+            if (section.extra["type"] == "SHT_SYMTAB")
                 symbol.name = std::string(sh_strtab_p + syms_data[i].st_name);
-            if(section.extra["type"] == "SHT_DYNSYM")
+            if (section.extra["type"] == "SHT_DYNSYM")
                 symbol.name = std::string(sh_dynstr_p + syms_data[i].st_name);
             symbol.extra["num"] = std::to_string(i);
             symbol.extra["index"] = get_symbol_index(syms_data[i].st_shndx);
@@ -110,7 +110,7 @@ std::vector<Relocation>& ElfParser::get_relocations() const {
     int32_t entry_size = 0;
     uint64_t vma_addr = 0;
     for (auto &section : sections) {
-        if(section.name == ".plt") {
+        if (section.name == ".plt") {
           entry_size = std::stoi(section.extra["entry_size"]);
           vma_addr = section.addr;
           break;

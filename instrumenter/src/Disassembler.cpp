@@ -61,6 +61,7 @@ void Disassembler::ins_disasm(uint8_t* code, int32_t size, std::intptr_t code_en
     } 
     else {
         std::cout << "ERROR: Failed to disassemble program ..." << std::endl;
+        exit(1);
     }
     cs_close(&cs_handle);
 }

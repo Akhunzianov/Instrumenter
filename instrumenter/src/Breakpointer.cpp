@@ -95,8 +95,8 @@ void Breakpointer::step_over_breakpoint(std::unordered_map<std::intptr_t, int>& 
             if (bp.is_func_addr) {
                 auto &sym = functions[func_ht[bp.bp_addr]];
                 std::cout << "  call: " << sym.name << " ";
-		if (print_regs)
-		    print_registers(prog_pid);
+		        if (print_regs)
+		            print_registers(prog_pid);
             }
             printf("\n");
             auto previous_prog_counter = bp_prog_counter;
@@ -104,7 +104,7 @@ void Breakpointer::step_over_breakpoint(std::unordered_map<std::intptr_t, int>& 
             disable_breakpoint(prog_pid, bp);
             ptrace(PTRACE_SINGLESTEP, prog_pid, nullptr, nullptr);
             if (wait_signal() == 0)
-	        exit(0);
+	            exit(0);
             enable_breakpoint(prog_pid, bp);
         }
   } 

@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
                 if (!sec.extra.empty()) {
                     for (const auto& kv : sec.extra)
                 	std::cout << kv.first << "=" << std::left << std::setw(10) << kv.second << " ";
-		}
+		        }
                 std::cout << "\n";
             }
         }
