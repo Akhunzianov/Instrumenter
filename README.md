@@ -193,7 +193,7 @@ But feel free to add your own
 
 ### ✅ Default Override File: user.cpp
 
-The repository already includes a user.cpp file that is compiled by default. You can use this file to implement your own behavior. For example:
+The repository already includes a user.cpp file that is added to build. You can use this file to implement your own behavior. For example:
 
 ```cpp
 extern "C" void on_breakpoint_ptrace(pid_t pid, breakpoint_t& bp) {
@@ -201,7 +201,8 @@ extern "C" void on_breakpoint_ptrace(pid_t pid, breakpoint_t& bp) {
 }
 ```
 These functions provide you with a large specter of capabillities as you can utilize `ptrace` functions 
-inside them to get basically any info about running binary. Learn more about [ptrace](https://man7.org/linux/man-pages/man2/ptrace.2.html)
+inside them to get basically any info about running binary (e.g. read basic and float registers, memmory, etc). 
+Learn more about [ptrace](https://man7.org/linux/man-pages/man2/ptrace.2.html)
 
 ---
 
@@ -218,7 +219,8 @@ This project relies on the following external libraries and tools:
 | **C++ STL**    | Standard containers, strings, streams, etc.       | 
 
 > ✅ **Capstone** is used to disassembly machine-level instructions in binaries.
-> ✅ **Keystone** is not used right now but is included for possible futere use
+
+> ❗️ **Keystone** is not used right now but is included for possible futere use
 
 ---
 
@@ -245,15 +247,15 @@ ldconfig
 - Only ELF binaries for supported architectures (currently x86_64) are accepted
 - Check if `ptrace` is availible on your platform to understand if the tool will work properly
 - `ptrace` may not work properly with containers
-- If you are facing errors try to specify the whole path to binary
 
 ---
 
 ## ⚙️ Supported Architectures
 -	x86_64
+## ⚙️ Supported Executable formats
+-	ELF
 
-Want to Add a New Architecture?
-
+## Want to Add a New Architecture?
 See CONTRIBUTING.md
 
 ---
