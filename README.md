@@ -61,7 +61,10 @@ Used to inspect the structure of an ELF binary without executing it.
 ## 🧪 Instrumentation Mode
 
 Runs the target binary under ptrace with automatic breakpoint insertion.
-Can be used to trace function calls and optionally dump register values.
+Can be used to trace function calls and optionally dump register values. 
+If file contains symbol information then at the function call will be accounted 
+and the will be displayed in a readable format. If file however does not contain symbols
+the disassembly will take place and functions will be named automatically as `f_<numder>`
 ```
 ./instrumenter_exec --print-regs ./path/to/binary.elf [args...]
 ```
@@ -138,6 +141,32 @@ UNKNOWN             R       0x338       0x338       0x338       48          48  
 GNU_EH_FRAME        R       0x2004      0x2004      0x2004      60          60          align=4          
 GNU_STACK           RW      0x0         0x0         0x0         0           0           align=16         
 GNU_RELRO           R       0x2df0      0x3df0      0x3df0      528         528         align=1  
+
+```
+```bash
+➜  Instrumenter git:(main) ./instrumenter_exec /bin/ps 
+breakpoint at [0x567aadb8d59b]   call: f_95084900568800 
+breakpoint at [0x567aadb95b8c]   call: f_95084900593616 
+breakpoint at [0x567aadb95508]   call: f_95084900593616 
+breakpoint at [0x567aadb95527]   call: f_95084900593616 
+breakpoint at [0x567aadb9562d]   call: f_95084900593616 
+breakpoint at [0x567aadb90b9e]   call: f_95084900583312 
+    PID TTY          TIME CMD
+breakpoint at [0x567aadb8ecb3]   call: f_95084900574608 
+   1237 pts/1    00:00:00 sudo
+breakpoint at [0x567aadb8ecb3]   call: f_95084900574608 
+   1238 pts/1    00:00:00 su
+breakpoint at [0x567aadb8ecb3]   call: f_95084900574608 
+   1239 pts/1    00:00:00 bash
+breakpoint at [0x567aadb8ecb3]   call: f_95084900574608 
+   1246 pts/1    00:00:00 zsh
+breakpoint at [0x567aadb8ecb3]   call: f_95084900574608 
+   1896 pts/1    00:00:00 instrumenter_ex
+breakpoint at [0x567aadb8ecb3]   call: f_95084900574608 
+   1897 pts/1    00:00:00 ps
+breakpoint at [0x567aadb94087]   call: f_95084900597744 
+breakpoint at [0x567aadb940a7]   call: f_95084900597744 
+[+] process 1897 terminated
 
 ```
 
